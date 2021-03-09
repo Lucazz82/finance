@@ -1,0 +1,10 @@
+body {
+    font-family: Montserrat;
+    font-weight: 700;
+    min-height: 100vh;
+}
+
+main .form-control {
+    display: inline-block;
+    width: auto;
+}
