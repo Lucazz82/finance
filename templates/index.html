@@ -5,5 +5,33 @@
 {% endblock %}
 
 {% block main %}
+    <h1 class="display-3 mb-4">Spending</h1>
 
+    <form action="/" method="post" class="p-2 mx-auto">
+        <div class="form-group">
+            <input type="text" autofocus autocomplete="off" placeholder="Description" name='description' class='form-control' required>
+        </div>
+        <div class="form-group">
+            <input type="number" step='0.01' autocomplete="off" placeholder="Price" name='price' class="form-control" required>
+        </div>
+        <div class="form-group">
+            <input autocomplete='off' placeholder='Category' name='category' type='text' id='category' class='form-control mb-2' list='categoryList' required>
+            <datalist id='categoryList'>
+                <option>Food</option>
+                <option>Transportation</option>
+            </datalist>
+        </div>
+        <div class="form-group form-row">
+            <label for="instalments" class="col-6 col-form-label">Instalments</label>
+            <select name="instalments" id="instalments" class='form-control col'>
+                <option value="no" selected>No</option>
+                <option value="yes">Yes</option>
+            </select>
+            <label for="number" id='instalments-label' class='col col-form-label d-none'>#</label>
+            <input type="number" min='1' id='instalments-number' class='form-control col d-none'>
+        </div>
+        <input type="submit" value='Add' class="form-control btn btn-dark">
+    </form>
+
+    <script src='./static/instalments.js'></script>
 {% endblock%}

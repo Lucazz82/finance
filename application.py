@@ -30,6 +30,7 @@ Session(app)
 # Configure database
 db = sqlite3.connect("database.db")
 db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, username TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(id))')
+db.execute('CREATE TABLE IF NOT EXISTS expense (id INTEGER NOT NULL, description TEXT NOT NULL, price REAL NOT NULL, category TEXT, instalments INTEGER)')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -37,14 +38,26 @@ db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, username TEXT NOT NULL
 def index():
 
     if request.method == "POST":
-        session['name'] = request.form.get('name')
+
+        id = session['user_id'] 
+        description = request.form.get('description')
+        price = request.form.get('price')
+        category = request.form.get('category')
+        instalments = request.form.get('instalments')
+        n_instalments = request.form.get('number')
+
+        if instalments == 'yes':
+            if n_instalments.is_digit():
+                n_instalments = int(n_instalments)
+        else:
+            n_instalments = 1
+
+        db.execute('INSERT INTO expense (id, description, price, category, instalments) VALUES (?,?,?,?,?)', (id, description, price, category, n_instalments))
+        db.commit()
+
         return redirect(url_for('index'))
 
-    name = ""
-    if 'name' in session:
-        name = session['name']
-
-    return render_template('index.html', name=name)
+    return render_template('index.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -55,12 +68,13 @@ def login():
 
         if not username:
             # need username
-            flash('Must provide a username', 'danger')
+            flash({'message': 'Must provide a username', 'class': 'danger'}, 'message')
             return redirect(url_for('login'))
 
         if not password:
             # need password
-            flash('Must provide a password', 'danger')
+            flash({'message': 'Must provide a password', 'class': 'danger'}, 'message')
+            flash(username, 'username')       
             return redirect(url_for('login'))
 
         data = []
@@ -121,6 +135,15 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+
+@app.route('/spendingCategories')
+@login_required
+def spendingCategories():
+    # select all the categories for the user and return
+    id = session['user_id']
+    data = db.execute('SELECT category FROM expense WHERE id=? GROUP BY category', {id,})
+    return data
 
 
 def error(e):

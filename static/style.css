@@ -4,7 +4,16 @@ body {
     min-height: 100vh;
 }
 
-main .form-control {
+/* main .form-control {
     display: inline-block;
     width: auto;
+} */
+
+main form {
+    max-width: 25rem;
+}
+
+main form .form-row {
+    margin-right: 0;
+    margin-left: 0;
 }

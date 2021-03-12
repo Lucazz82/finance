@@ -41,12 +41,14 @@
     </nav>
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
-            {% for category, message in messages %}
-                <header>
-                    <div class="alert alert-{{category}} text-center">
-                    {{ message }} 
-                    </div>
-                </header>
+            {% for type, message in messages %}
+                {% if type == 'message' %}
+                    <header>    
+                        <div class="alert alert-{{message['class']}} text-center">
+                        {{ message['message'] }} 
+                        </div>
+                    </header>
+                {% endif %}
             {% endfor %}
         {% endif %}
     {% endwith %}
