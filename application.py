@@ -5,7 +5,8 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 import requests 
 import sqlite3
-from helpers import login_required, Database
+from helpers import login_required, is_float
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure application
 app = Flask(__name__)
@@ -28,11 +29,27 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure database
-# db = sqlite3.connect("database.db")
-# execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, username TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(id))')
-# execute('CREATE TABLE IF NOT EXISTS expense (id INTEGER NOT NULL, description TEXT NOT NULL, price REAL NOT NULL, category TEXT, instalments INTEGER)')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finance.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-db = Database('database.db')
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    username = db.Column(db.String, unique=True, nullable=False)
+    hash = db.Column(db.String, nullable=False)
+
+
+class Spending(db.Model):
+    __tablename__ = 'spendings'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer)
+    description = db.Column(db.String, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String)
+    instalments = db.Column(db.Integer)
+    date = db.Column(db.DateTime)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -44,6 +61,13 @@ def index():
         id = session['user_id'] 
         description = request.form.get('description')
         price = request.form.get('price')
+
+        if not is_float(price):
+            flash({'message': 'Invalid price', 'class': 'danger'}, 'message')
+            return redirect(url_for('index'))
+
+        price = float(price)
+
         category = request.form.get('category')
         instalments = request.form.get('instalments')
         n_instalments = request.form.get('number')
@@ -54,10 +78,10 @@ def index():
         else:
             n_instalments = 1
 
-        # cur = db.cursor()
-        # cur.execute('INSERT INTO expense (id, description, price, category, instalments) VALUES (?,?,?,?,?)', (id, description, price, category, n_instalments))
-        # db.commit()
-        db.execute('INSERT INTO expense (id, description, price, category, instalments) VALUES (?,?,?,?,?)', (id, description, price, category, n_instalments))
+        spending = Spending(user_id=id, description=description, price=price, category=category, instalments=n_instalments)
+        db.session.add(spending)
+        db.session.commit()
+
         return redirect(url_for('index'))
 
     return render_template('index.html')
@@ -80,23 +104,20 @@ def login():
             flash(username, 'username')       
             return redirect(url_for('login'))
 
-        data = []
+        data = User.query.filter_by(username=username).first()
 
-        for row in db.execute('select hash, id from users where username = ?', (username,)):
-            data.append(row)
-
-        if len(data) != 1:
+        if data is None:
             # invalid password or username
-            flash('Invalid username or password', 'danger')
+            flash({'message': 'Invalid username or password', 'class': 'danger'}, 'message')
             return redirect(url_for('login'))
 
-        if not check_password_hash(data[0][0], password):
+        if not check_password_hash(data.hash, password):
             # invalid password or username
-            flash('Invalid username or password', 'danger')
+            flash({'message': 'Invalid username or password', 'class': 'danger'}, 'message')
             return redirect(url_for('login'))
 
-        session['user_id'] = data[0][1]
-        flash(f'{username} login successfully', 'success')
+        session['user_id'] = data.id
+        flash({'message': f'{username} login successfully', 'class': 'success'}, 'message')
         return redirect(url_for('index'))
 
     return render_template('login.html')
@@ -118,22 +139,26 @@ def register():
 
         if not username:
             # need username
-            flash("Must provide a username", 'danger')
+            flash({'message': "Must provide a username", 'class': 'danger'}, 'message')
             return redirect(url_for('register'))
         
         if not password:
             # need password
-            flash('Must provide a password', 'danger')
+            flash({'message': 'Must provide a password', 'class': 'danger'}, 'message')
             return redirect(url_for('register'))
 
         if password != confirmation:
-            flash("Password doesn't match", 'danger')
+            flash({'message': "Password doesn't match", 'class': 'danger'}, 'message')
+            return redirect(url_for('register'))
+            
+        if User.query.filter_by(username=username).count() != 0:
+            flash({'message': 'Username already exists', 'class': 'danger'}, 'message')
             return redirect(url_for('register'))
 
-        data = (username, generate_password_hash(password))
 
-        db.execute('INSERT INTO users (username, hash) VALUES (?, ?)', data)
-        db.commit()        
+        user = User(username=username, hash=generate_password_hash(password))
+        db.session.add(user)
+        db.session.commit()
 
         return redirect(url_for('login'))
 

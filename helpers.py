@@ -12,4 +12,13 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
-   
+
+
+def is_float(number);
+    try:
+        number = float(number)
+
+    except:
+        return False
+
+    return True
