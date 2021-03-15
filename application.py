@@ -5,7 +5,7 @@ from werkzeug.exceptions import default_exceptions, HTTPException, InternalServe
 from werkzeug.security import check_password_hash, generate_password_hash
 import requests 
 import sqlite3
-from helpers import login_required
+from helpers import login_required, Database
 
 # Configure application
 app = Flask(__name__)
@@ -28,9 +28,11 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure database
-db = sqlite3.connect("database.db")
-db.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, username TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(id))')
-db.execute('CREATE TABLE IF NOT EXISTS expense (id INTEGER NOT NULL, description TEXT NOT NULL, price REAL NOT NULL, category TEXT, instalments INTEGER)')
+# db = sqlite3.connect("database.db")
+# execute('CREATE TABLE IF NOT EXISTS users (id INTEGER, username TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY(id))')
+# execute('CREATE TABLE IF NOT EXISTS expense (id INTEGER NOT NULL, description TEXT NOT NULL, price REAL NOT NULL, category TEXT, instalments INTEGER)')
+
+db = Database('database.db')
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -52,9 +54,10 @@ def index():
         else:
             n_instalments = 1
 
+        # cur = db.cursor()
+        # cur.execute('INSERT INTO expense (id, description, price, category, instalments) VALUES (?,?,?,?,?)', (id, description, price, category, n_instalments))
+        # db.commit()
         db.execute('INSERT INTO expense (id, description, price, category, instalments) VALUES (?,?,?,?,?)', (id, description, price, category, n_instalments))
-        db.commit()
-
         return redirect(url_for('index'))
 
     return render_template('index.html')
@@ -153,4 +156,3 @@ def error(e):
 
 for code in default_exceptions:
     app.errorhandler(code)(error)
-    

@@ -1,5 +1,9 @@
 from functools import wraps
 from flask import session, redirect, url_for
+import sqlite3
+
+DATABASE = 'database.db'
+
 
 def login_required(f):
     @wraps(f)
@@ -8,3 +12,4 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+   
