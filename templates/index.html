@@ -17,8 +17,9 @@
         <div class="form-group">
             <input autocomplete='off' placeholder='Category' name='category' type='text' id='category' class='form-control mb-2' list='categoryList' required>
             <datalist id='categoryList'>
-                <option>Food</option>
-                <option>Transportation</option>
+                {% for spending in spendings %}
+                    <option>{{ spending.category }}</option>  
+                {% endfor %}
             </datalist>
         </div>
         <div class="form-group form-row">
@@ -28,10 +29,37 @@
                 <option value="yes">Yes</option>
             </select>
             <label for="number" id='instalments-label' class='col col-form-label d-none'>#</label>
-            <input type="number" min='1' id='instalments-number' class='form-control col d-none'>
+            <input type="number" min='1' id='instalments-number' class='form-control col d-none' name='number'>
         </div>
         <input type="submit" value='Add' class="form-control btn btn-dark">
     </form>
 
+    <table class="table table-hover table-responsive-md my-5">
+        <thead class="thead-dark">
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Instalments</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for spending in spendings %}
+                <tr>
+                    <th>{{spending.date|date}}</th>
+                    <th class='align-middle'>{{ spending.description }}</th>
+                    <th class='align-middle'>{{ spending.price|usd }}</th>
+                    <th class='align-middle'><span class='btn btn-{{ spending.bootstrap.color }}'>{{spending.category}}</span></th>
+                    <th class='align-middle'>{{spending|instalments}}</th>
+                    <!-- Trash icon -->
+                    <th class='align-middle'><a class='btn' href='/delete/{{spending.id}}'><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16"><path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/></svg></a></th>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <script src='./static/instalments.js'></script>
+    <!-- <script src='./static/table.js'></script> -->
 {% endblock%}
