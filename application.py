@@ -8,6 +8,7 @@ import sqlite3
 from helpers import login_required, is_float, usd, instalments, date
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy.sql import func
 import random
 
 # Configure application
@@ -48,7 +49,7 @@ class Spending(db.Model):
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String)
     instalments = db.Column(db.Integer)
-    date = db.Column(db.DateTime, default=datetime.now())
+    date = db.Column(db.DateTime(timezone=True), server_default=func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     color_id = db.Column(db.Integer, db.ForeignKey('colors.id'))
 
@@ -65,7 +66,8 @@ class Color(db.Model):
     __tablename__ = 'colors'
     id = db.Column(db.Integer, primary_key=True)
     color = db.Column(db.String, nullable=False)
-    categorys = db.relationship('Spending', backref='bootstrap')
+    category = db.Column(db.String, nullable=False, unique=True)
+    spendings = db.relationship('Spending', backref='style')
 
 # Create table if not exists
 db.create_all()
@@ -89,18 +91,15 @@ def index():
 
         category = request.form.get('category')
 
-        color = Spending.query.filter_by(category=category).first()
+        # color = Spending.query.filter_by(category=category).first()
+        color = Color.query.filter_by(category=category).first()
 
         if not color:
             # Add color to that category
-            category_class = Color(color=random.choice(['danger', 'success', 'warning', 'info', 'dark', 'primary']))
-        else:
-            category_class = color.bootstrap
+            color = Color(color=random.choice(['danger', 'success', 'warning', 'info', 'dark', 'primary']), category=category)
 
         instalments = request.form.get('instalments')
         n_instalments = request.form.get('number')
-
-        # print(f"n_instalments is {n_instalments}")
 
         # Check if the number of instalments is an integer
         if instalments == 'yes':
@@ -116,7 +115,7 @@ def index():
         else:
             n_instalments = 1
 
-        spending = Spending(user_id=id, description=description, price=price, category=category, instalments=n_instalments, bootstrap=category_class)
+        spending = Spending(user_id=id, description=description, price=price, category=category, instalments=n_instalments, style=color)
         db.session.add(spending)
         db.session.commit()
 
@@ -246,7 +245,7 @@ def delete(id):
     if data.user_id != session['user_id']:
         flash({'message': 'Invalid item', 'class': 'danger'}, 'message')
         return redirect(url_for('index'))
-    
+
     db.session.delete(data)
     db.session.commit()
     return redirect(url_for('index'))

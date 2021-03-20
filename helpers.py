@@ -2,8 +2,8 @@ from functools import wraps
 from flask import session, redirect, url_for, flash
 import sqlite3
 from datetime import datetime
-from datautil import tz
-
+# from dateutil import tz
+from dateutil import tz
 DATABASE = 'database.db'
 
 # Config timezone
@@ -54,6 +54,7 @@ def utc_to_local(time):
     return time.replace(tzinfo=utc_timezone).astimezone(tz=local_timezone)
 
 
+# Conver the time from UTC (which is stored in db) to current timezone
 def date(value):
     time = utc_to_local(value)
-    return time.strftime('%d/%m')
+    return time.strftime('%d/%m - %H:%M')
