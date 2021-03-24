@@ -10,7 +10,19 @@
 
     <form action="/login" method='post' class='p-2 mx-auto'>
         <div class="form-group">
-            <input name="username" class="form-control mb-2" type="text" autocomplete="off" autofocus placeholder="Username">
+            <input name="username" class="form-control mb-2" type="text" autocomplete="off" autofocus placeholder="Username"
+            
+            {# Keep username if user fail at type password #}
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for type, message in messages %}
+                        {% if type == 'username' %}
+                           value='{{message}}'> 
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
         </div>
         <div class="form-group">
             <input name="password" class="form-control mb-2" type="password" placeholder="Password">

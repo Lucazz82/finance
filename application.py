@@ -53,6 +53,15 @@ class Spending(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     color_id = db.Column(db.Integer, db.ForeignKey('colors.id'))
 
+    def serialice(self):
+        return {
+            'description': self.description,
+            'price': self.price,
+            'category': self.category,
+            'instalments': self.instalments,
+            'date': self.date
+        }
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -139,19 +148,21 @@ def login():
 
         if not password:
             # need password
+            flash(username, 'username')
             flash({'message': 'Must provide a password', 'class': 'danger'}, 'message')
-            flash(username, 'username')       
             return redirect(url_for('login'))
 
         data = User.query.filter_by(username=username).first()
 
         if data is None:
             # invalid password or username
+            flash(username, 'username')
             flash({'message': 'Invalid username or password', 'class': 'danger'}, 'message')
             return redirect(url_for('login'))
 
         if not check_password_hash(data.hash, password):
             # invalid password or username
+            flash(username, 'username')
             flash({'message': 'Invalid username or password', 'class': 'danger'}, 'message')
             return redirect(url_for('login'))
 
@@ -216,20 +227,10 @@ def register():
 @app.route('/autocomplete')
 @login_required
 def tableInformation():
-    # data = Spending.query.filter_by(user_id=session['user_id']).all()
-    data = Spending.query.filter_by(id=id).with_entities(Spending.category).group_by(Spending.category) 
-    # response = []
+    data = Spending.query.filter_by(user_id=session['user_id']).all()
+    json = [x.serialice() for x in data]
 
-    # for item in data:
-    #     value = {}
-    #     value['date'] = item.date
-    #     value['description'] = item.description
-    #     value['price'] = item.price
-    #     value['category'] = item.category
-    #     response.append(value)
-    print(data)
-    # return jsonify(data)
-    return "culo"
+    return jsonify(json)
 
 
 @app.route('/delete/<id>')

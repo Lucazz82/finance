@@ -57,4 +57,4 @@ def utc_to_local(time):
 # Conver the time from UTC (which is stored in db) to current timezone
 def date(value):
     time = utc_to_local(value)
-    return time.strftime('%d/%m - %H:%M')
+    return time.strftime('%d/%m')
